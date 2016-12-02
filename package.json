@@ -1,0 +1,61 @@
+{
+  "name": "nosqwal-couchbase",
+  "version": "0.0.0",
+  "description": "My luminous module",
+  "license": "MIT",
+  "repository": "mastilver/nosqwal-couchbase",
+  "author": {
+    "name": "Thomas Sileghem",
+    "email": "th.sileghem@gmail.com",
+    "url": "mastilver.com"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "scripts": {
+    "test": "xo && nyc ava",
+    "postinstall": "rm -rf test && cp -r node_modules/nosqwal-test/test test",
+    "setup-couchbase": "node setup-couchbase.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "keywords": [
+    ""
+  ],
+  "dependencies": {
+    "couchbase": "^2.2.4",
+    "cuid": "^1.3.8"
+  },
+  "devDependencies": {
+    "ava": "^0.15.2",
+    "coveralls": "^2.11.12",
+    "execa": "^0.5.0",
+    "nosqwal-test": "^0.2.2",
+    "nyc": "^7.1.0",
+    "xo": "^0.16.0"
+  },
+  "xo": {
+    "esnext": true,
+    "space": 4,
+    "ignores": [
+      "**/coverage/**"
+    ],
+    "rules": {
+      "ava/no-ignored-test-files": "off",
+      "eqeqeq": "off",
+      "no-eq-null": "off"
+    }
+  },
+  "nyc": {
+    "reporter": [
+      "lcov",
+      "text"
+    ]
+  },
+  "ava": {
+    "require": [
+      "./setup-test.js"
+    ]
+  }
+}
