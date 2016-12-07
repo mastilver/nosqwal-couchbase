@@ -6,6 +6,7 @@ killAllContainers();
 launchContainer('couchbase', 'mastilver/couchbase', [
     8091,
     8092,
+    8093,
     11207,
     11210,
     11211,

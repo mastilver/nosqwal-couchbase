@@ -3,9 +3,20 @@
 const couchbase = require('couchbase');
 const cuid = require('cuid');
 
+const N1qlQuery = couchbase.N1qlQuery;
+
 module.exports = function (options) {
-    const cluster = new couchbase.Cluster(options.connectionString || 'couchbase://localhost?detailed_errcodes=1');
-    const bucket = cluster.openBucket(options.bucketName || 'default');
+    options = options || {};
+
+    const connectionString = options.connectionString || 'couchbase://localhost?detailed_errcodes=1';
+    const bucketName = options.bucketName || 'default';
+
+    const cluster = new couchbase.Cluster(connectionString);
+    const bucket = cluster.openBucket(bucketName);
+
+    const bucketManager = bucket.manager();
+
+    const primaryIndexPromise = createPrimaryIndex(bucketManager);
 
     return {
         defineCollection(collectionName) {
@@ -27,7 +38,7 @@ module.exports = function (options) {
                         const docToCreate = Object.assign({
                             id: cuid()
                         }, doc, {
-                            $type: collectionName
+                            _type: collectionName
                         });
 
                         bucket.insert(`${collectionName}-${docToCreate.id}`, docToCreate, err => {
@@ -43,7 +54,7 @@ module.exports = function (options) {
                 update(doc) {
                     return new Promise((resolve, reject) => {
                         const docToUpdate = Object.assign({}, doc, {
-                            $type: collectionName
+                            _type: collectionName
                         });
 
                         bucket.upsert(`${collectionName}-${docToUpdate.id}`, docToUpdate, err => {
@@ -66,8 +77,77 @@ module.exports = function (options) {
                             resolve();
                         });
                     });
+                },
+
+                query(queryOptions) {
+                    return Promise.resolve(primaryIndexPromise)
+                        .then(() => new Promise((resolve, reject) => {
+                            const q = buildQuery(bucketName, collectionName, queryOptions);
+
+                            const n1qlQuery = N1qlQuery.fromString(q.query);
+                            n1qlQuery.consistency(N1qlQuery.Consistency.REQUEST_PLUS);
+
+                            bucket.query(n1qlQuery, q.params, (err, result) => {
+                                if (err) {
+                                    return reject(err);
+                                }
+
+                                resolve(result);
+                            });
+                        }));
                 }
             };
         }
     };
 };
+
+function createPrimaryIndex(bucketManager) {
+    return new Promise((resolve, reject) => {
+        bucketManager.createPrimaryIndex(err => {
+            if (err) {
+                reject(err);
+            }
+
+            resolve();
+        });
+    });
+}
+
+function buildQuery(bucketName, collectionName, queryOptions) {
+    queryOptions = queryOptions || {};
+    const where = queryOptions.where || {};
+
+    const queryParams = [];
+    let queryString = `
+        SELECT a.*
+        FROM ${bucketName} a
+        WHERE a._type = "${collectionName}"
+    `;
+
+    Object.keys(where).forEach(prop => {
+        const operator = Object.keys(where[prop])[0];
+
+        switch (operator) {
+            case '$eq': {
+                const paramId = addParams(where[prop].$eq);
+                queryString += `
+                    AND
+                    a.${prop} = ${paramId}
+                `;
+            }
+                break;
+            default:
+
+        }
+    });
+
+    return {
+        query: `${queryString};`,
+        params: queryParams
+    };
+
+    function addParams(param) {
+        queryParams.push(param);
+        return `$${queryParams.length}`;
+    }
+}
