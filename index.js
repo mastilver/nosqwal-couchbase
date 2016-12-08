@@ -116,6 +116,9 @@ function createPrimaryIndex(bucketManager) {
 function buildQuery(bucketName, collectionName, queryOptions) {
     queryOptions = queryOptions || {};
     const where = queryOptions.where || {};
+    const limit = queryOptions.limit;
+    const offset = queryOptions.offset || 0;
+    const orderBy = queryOptions.orderBy || [];
 
     const queryParams = [];
     let queryString = `
@@ -140,6 +143,26 @@ function buildQuery(bucketName, collectionName, queryOptions) {
 
         }
     });
+
+    orderBy.forEach(order => {
+        const asc = order[1] == null || order[1] === true;
+
+        queryString += `
+            ORDER BY ${order[0]} ${asc ? 'ASC' : 'DESC'}
+        `;
+    });
+
+    if (limit != null) {
+        queryString += `
+            LIMIT ${limit}
+        `;
+
+        if (offset !== 0) {
+            queryString += `
+                OFFSET ${offset}
+            `;
+        }
+    }
 
     return {
         query: `${queryString};`,
