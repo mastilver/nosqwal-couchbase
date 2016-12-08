@@ -2,6 +2,7 @@
 
 const couchbase = require('couchbase');
 const cuid = require('cuid');
+const pWaitFor = require('p-wait-for');
 
 const N1qlQuery = couchbase.N1qlQuery;
 
@@ -14,9 +15,7 @@ module.exports = function (options) {
     const cluster = new couchbase.Cluster(connectionString);
     const bucket = cluster.openBucket(bucketName);
 
-    const bucketManager = bucket.manager();
-
-    const primaryIndexPromise = createPrimaryIndex(bucketManager);
+    const primaryIndexPromise = createPrimaryIndex(bucket, bucketName);
 
     return {
         defineCollection(collectionName) {
@@ -101,14 +100,41 @@ module.exports = function (options) {
     };
 };
 
-function createPrimaryIndex(bucketManager) {
-    return new Promise((resolve, reject) => {
-        bucketManager.createPrimaryIndex(err => {
+/*
+    - Check first if we can query
+    - If we can't then it create the primary index
+    - Then it waits untils it's ready
+*/
+function createPrimaryIndex(bucket, bucketName) {
+    return checkBucketReadyToBeQueried(bucket, bucketName)
+    .then(isReady => {
+        if (!isReady) {
+            return new Promise((resolve, reject) => {
+                const bucketManager = bucket.manager();
+                bucketManager.createPrimaryIndex(err => {
+                    if (err) {
+                        reject(err);
+                    }
+
+                    resolve();
+                });
+            })
+            .then(() => pWaitFor(() => checkBucketReadyToBeQueried(bucket, bucketName)));
+        }
+    });
+}
+
+function checkBucketReadyToBeQueried(bucket, bucketName) {
+    return new Promise(resolve => {
+        const n1qlQuery = N1qlQuery.fromString(`SELECT * FROM ${bucketName}`);
+        n1qlQuery.consistency(N1qlQuery.Consistency.REQUEST_PLUS);
+
+        bucket.query(n1qlQuery, [], err => {
             if (err) {
-                reject(err);
+                return resolve(false);
             }
 
-            resolve();
+            resolve(true);
         });
     });
 }
