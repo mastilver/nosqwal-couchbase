@@ -15,7 +15,7 @@
   "scripts": {
     "test": "xo && nyc ava",
     "postinstall": "rm -rf test && cp -r node_modules/nosqwal-test/test test",
-    "setup-couchbase": "node setup-couchbase.js"
+    "setup-couchbase": "node scripts/setup-couchbase.js"
   },
   "files": [
     "index.js"

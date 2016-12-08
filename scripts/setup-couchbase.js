@@ -9,7 +9,6 @@ launchContainer('couchbase', 'mastilver/couchbase', [
     8093,
     11207,
     11210,
-    11211,
     18091,
     18092,
     4369
