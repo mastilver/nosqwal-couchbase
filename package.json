@@ -1,7 +1,7 @@
 {
   "name": "nosqwal-couchbase",
   "version": "0.1.0",
-  "description": "My luminous module",
+  "description": "Nosqwal adapter for couchbase",
   "license": "MIT",
   "repository": "mastilver/nosqwal-couchbase",
   "author": {
@@ -21,7 +21,9 @@
     "index.js"
   ],
   "keywords": [
-    ""
+    "couchbase",
+    "nosqwal",
+    "odm"
   ],
   "dependencies": {
     "couchbase": "^2.2.4",

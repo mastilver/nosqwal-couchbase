@@ -1,6 +1,6 @@
 # nosqwal-couchbase [![Build Status](https://travis-ci.org/mastilver/nosqwal-couchbase.svg?branch=master)](https://travis-ci.org/mastilver/nosqwal-couchbase) [![Coverage Status](https://coveralls.io/repos/github/mastilver/nosqwal-couchbase/badge.svg?branch=master)](https://coveralls.io/github/mastilver/nosqwal-couchbase?branch=master)
 
-> My luminous module
+> [Nosqwal](https://github.com/mastilver/nosqwal) adapter for couchbase
 
 
 ## Install
