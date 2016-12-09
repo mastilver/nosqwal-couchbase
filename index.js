@@ -34,9 +34,8 @@ module.exports = function (options) {
 
                 create(doc) {
                     return new Promise((resolve, reject) => {
-                        const docToCreate = Object.assign({
-                            id: cuid()
-                        }, doc, {
+                        const docToCreate = Object.assign({}, doc, {
+                            id: cuid(),
                             _type: collectionName
                         });
 
